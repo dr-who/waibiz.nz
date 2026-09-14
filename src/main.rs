@@ -288,8 +288,13 @@ fn river_x(width: f64, normalized_x: f64, progress: f64) -> f64 {
     } else {
         (width * 0.48).min(650.0)
     };
-    let lower_river = ((progress - 0.86) / 0.14).clamp(0.0, 1.0);
-    let western_hook = lower_river * lower_river * span * 0.34;
+    // The final 19 km turn sharply west before Te Pūaha o Waikato meets the sea.
+    // Smoothstep keeps the geographic line intact upstream while making that
+    // coastal hook legible on a tall, narrow page.
+    let lower_river = ((progress - 0.955) / 0.045).clamp(0.0, 1.0);
+    let lower_river = lower_river * lower_river * (3.0 - 2.0 * lower_river);
+    let hook_scale = if width < 700.0 { 0.65 } else { 0.48 };
+    let western_hook = lower_river * span * hook_scale;
     width * 0.5 + (normalized_x - 0.5) * span - western_hook
 }
 
@@ -535,7 +540,21 @@ fn App() -> impl IntoView {
                 <div class="source-label"><span>"LAKE TAUPŌ"</span><b>"357 M"</b></div>
             </section>
 
-            <section class="river-story" aria-label="The Waikato Business journey">
+            <section class="event-facts" aria-labelledby="event-facts-title">
+                <div class="event-facts__lead">
+                    <p class="bend__number">"THE FIRST GATHERING"</p>
+                    <h2 id="event-facts-title">"A meetup with a job to do."</h2>
+                    <p>"Come as you are. Leave with one honest conversation and one useful introduction."</p>
+                </div>
+                <dl class="event-facts__grid">
+                    <div><dt>"When"</dt><dd>"Thursday 15 October 2026"</dd></div>
+                    <div><dt>"Where"</dt><dd>"Kirikiriroa / venue revealed with registration"</dd></div>
+                    <div><dt>"Who"</dt><dd>"Founders, future founders, investors and practical supporters"</dd></div>
+                    <div><dt>"Why"</dt><dd>"Meet beyond your usual circle and help an idea move"</dd></div>
+                </dl>
+            </section>
+
+            <section class="river-story" aria-label="The Waikato Entrepreneur Meetup journey">
                 <article class="bend bend--source" id="source">
                     <div class="bend__copy bank--west">
                         <p class="bend__number">"01 / SOURCE"</p>

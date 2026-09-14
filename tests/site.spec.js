@@ -20,6 +20,7 @@ for (const viewport of viewports) {
     await expect(page.locator(".river-town")).toHaveCount(13);
     await expect(page.locator(".river-town--major")).toContainText("Kirikiriroa");
     await expect(page.locator(".bend__media img").first()).toHaveCSS("opacity", "0.54");
+    await expect(page.locator(".event-facts")).toContainText("Thursday 15 October 2026");
 
     const pageHeight = await page.evaluate(() => document.documentElement.scrollHeight);
     for (let y = 0; y < pageHeight; y += Math.floor(viewport.height * 0.72)) {
@@ -32,6 +33,23 @@ for (const viewport of viewports) {
     }
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await page.waitForTimeout(180);
+    const riverMouth = await page.locator("#river-field").evaluate((canvas) => {
+      const context = canvas.getContext("2d");
+      const bandHeight = Math.min(canvas.height, 420);
+      const pixels = context.getImageData(0, canvas.height - bandHeight, canvas.width, bandHeight).data;
+      let minimumX = canvas.width;
+      let maximumX = 0;
+      for (let y = 0; y < bandHeight; y += 2) {
+        for (let x = 0; x < canvas.width; x += 2) {
+          if (pixels[(y * canvas.width + x) * 4 + 3] > 30) {
+            minimumX = Math.min(minimumX, x);
+            maximumX = Math.max(maximumX, x);
+          }
+        }
+      }
+      return { centre: (minimumX + maximumX) / 2, width: canvas.width };
+    });
+    expect(riverMouth.centre).toBeLessThan(riverMouth.width * 0.4);
     await page.screenshot({ path: `/tmp/waibiz-${viewport.name}-port.png` });
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(180);
