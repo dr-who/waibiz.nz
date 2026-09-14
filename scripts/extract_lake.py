@@ -55,6 +55,17 @@ while segments:
 if ring[0] != ring[-1]:
     ring.append(ring[0])
 
+# Start the shoreline at the Waikato River outlet so the lake and river meet.
+outlet = (-38.6852663, 176.0663031)
+open_ring = ring[:-1]
+outlet_index = min(
+    range(len(open_ring)),
+    key=lambda index: (open_ring[index][1] - outlet[0]) ** 2
+    + (open_ring[index][0] - outlet[1]) ** 2,
+)
+open_ring = open_ring[outlet_index:] + open_ring[:outlet_index]
+ring = open_ring + [open_ring[0]]
+
 # Split the closed ring in two so Ramer-Douglas-Peucker retains the shoreline shape.
 split = len(ring) // 2
 ring = simplify(ring[: split + 1], 0.00035)[:-1] + simplify(ring[split:], 0.00035)

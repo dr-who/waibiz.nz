@@ -144,7 +144,7 @@ fn draw_taupo(context: &CanvasRenderingContext2d, state: &SkyState) {
     let maximum_width = state.width * if state.width < 700.0 { 0.9 } else { 0.52 };
     let lake_width = maximum_width.min(state.height * 0.78 * TAUPO_ASPECT);
     let lake_height = lake_width / TAUPO_ASPECT;
-    let river_source_x = river_x(state.width, WAIKATO_RIVER[0].1);
+    let river_source_x = river_x(state.width, WAIKATO_RIVER[0].1, 0.0);
     let origin_x = river_source_x - TAUPO_SHORE[0].0 * lake_width;
     let origin_y = state.height * 0.12;
 
@@ -282,20 +282,28 @@ fn start_signal_field(canvas: HtmlCanvasElement) {
     };
 }
 
-fn river_x(width: f64, normalized_x: f64) -> f64 {
+fn river_x(width: f64, normalized_x: f64, progress: f64) -> f64 {
     let span = if width < 700.0 {
         width * 0.28
     } else {
         (width * 0.48).min(650.0)
     };
-    width * 0.5 + (normalized_x - 0.5) * span
+    let lower_river = ((progress - 0.86) / 0.14).clamp(0.0, 1.0);
+    let western_hook = lower_river * lower_river * span * 0.34;
+    width * 0.5 + (normalized_x - 0.5) * span - western_hook
 }
 
-fn trace_river(context: &CanvasRenderingContext2d, width: f64, scroll_height: f64, scroll_y: f64) {
+fn trace_river(
+    context: &CanvasRenderingContext2d,
+    width: f64,
+    document_height: f64,
+    scroll_y: f64,
+    source_y: f64,
+) {
     context.begin_path();
     for (index, &(progress, x)) in WAIKATO_RIVER.iter().enumerate() {
-        let px = river_x(width, x);
-        let py = progress * scroll_height - scroll_y;
+        let px = river_x(width, x, progress);
+        let py = source_y + progress * (document_height - source_y) - scroll_y;
         if index == 0 {
             context.move_to(px, py);
         } else {
@@ -327,21 +335,25 @@ fn draw_river(canvas: &HtmlCanvasElement, context: &CanvasRenderingContext2d, ti
     context.clear_rect(0.0, 0.0, width, height);
 
     let scroll_y = window.scroll_y().unwrap_or(0.0);
-    let scroll_height = (root.scroll_height() as f64 - height).max(height);
+    let document_height = (root.scroll_height() as f64).max(height);
+    let maximum_lake_width = width * if width < 700.0 { 0.9 } else { 0.52 };
+    let lake_width = maximum_lake_width.min(height * 0.78 * TAUPO_ASPECT);
+    let lake_height = lake_width / TAUPO_ASPECT;
+    let source_y = height * 0.12 + TAUPO_SHORE[0].1 * lake_height;
     context.set_line_cap("round");
     context.set_line_join("round");
 
-    trace_river(context, width, scroll_height, scroll_y);
+    trace_river(context, width, document_height, scroll_y, source_y);
     context.set_stroke_style_str("rgba(169,48,39,0.94)");
     context.set_line_width(if width < 700.0 { 34.0 } else { 54.0 });
     context.stroke();
 
-    trace_river(context, width, scroll_height, scroll_y);
+    trace_river(context, width, document_height, scroll_y, source_y);
     context.set_stroke_style_str("rgba(8,9,8,0.98)");
     context.set_line_width(if width < 700.0 { 25.0 } else { 42.0 });
     context.stroke();
 
-    trace_river(context, width, scroll_height, scroll_y);
+    trace_river(context, width, document_height, scroll_y, source_y);
     context.set_stroke_style_str("rgba(241,238,229,0.58)");
     context.set_line_width(1.35);
     context.stroke();
@@ -355,22 +367,24 @@ fn draw_river(canvas: &HtmlCanvasElement, context: &CanvasRenderingContext2d, ti
         let progress = (moving + index as f64 / 7.0) % 1.0;
         let point_index = WAIKATO_RIVER.partition_point(|point| point.0 < progress);
         if let Some(&(_, x)) = WAIKATO_RIVER.get(point_index.min(WAIKATO_RIVER.len() - 1)) {
-            let py = progress * scroll_height - scroll_y;
+            let py = source_y + progress * (document_height - source_y) - scroll_y;
             if py > -20.0 && py < height + 20.0 {
                 context.begin_path();
                 context.set_fill_style_str("rgba(241,238,229,0.95)");
-                let _ = context.arc(river_x(width, x), py, 3.2, 0.0, TAU);
+                let _ = context.arc(river_x(width, x, progress), py, 3.2, 0.0, TAU);
                 context.fill();
             }
         }
     }
 
-    let markers = [0.18, 0.36, 0.54, 0.72, 0.88];
+    let markers = [
+        0.003, 0.021, 0.275, 0.368, 0.574, 0.600, 0.681, 0.740, 0.790, 0.837, 0.901, 0.914, 0.984,
+    ];
     for (index, progress) in markers.iter().enumerate() {
         let point_index = WAIKATO_RIVER.partition_point(|point| point.0 < *progress);
         if let Some(&(_, x)) = WAIKATO_RIVER.get(point_index.min(WAIKATO_RIVER.len() - 1)) {
-            let px = river_x(width, x);
-            let py = progress * scroll_height - scroll_y;
+            let px = river_x(width, x, *progress);
+            let py = source_y + progress * (document_height - source_y) - scroll_y;
             if py > -50.0 && py < height + 50.0 {
                 let pulse = if reduced_motion() {
                     0.0
@@ -380,7 +394,8 @@ fn draw_river(canvas: &HtmlCanvasElement, context: &CanvasRenderingContext2d, ti
                 context.begin_path();
                 context.set_line_width(1.0);
                 context.set_stroke_style_str("rgba(241,238,229,0.82)");
-                let _ = context.arc(px, py, 12.0 + pulse, 0.18, TAU - 0.44);
+                let marker_radius = if index == 6 { 19.0 } else { 10.0 };
+                let _ = context.arc(px, py, marker_radius + pulse, 0.18, TAU - 0.44);
                 context.stroke();
                 context.begin_path();
                 context.set_fill_style_str("rgba(214,64,50,0.96)");
@@ -467,24 +482,40 @@ fn App() -> impl IntoView {
         <canvas node_ref=river_ref id="river-field" aria-hidden="true"></canvas>
 
         <header class="masthead">
-            <a class="masthead__brand" href="#top" aria-label="Waikato Business home">
-                <span>"WAIKATO"</span><strong>"BUSINESS"</strong>
+            <a class="masthead__brand" href="#top" aria-label="Waikato Entrepreneur Meetup home">
+                <span>"WAIKATO ENTREPRENEUR"</span><strong>"/ BIZ MEETUP"</strong>
             </a>
             <span class="masthead__signal" aria-hidden="true"></span>
             <a class="signup" href=EVENTBRITE_URL target="_blank" rel="noreferrer">
-                <span>"Sign up"</span>
+                <span>"Oct 15th / Signup"</span>
                 <b aria-hidden="true">"↗"</b>
             </a>
         </header>
 
         <main>
+            <nav class="river-towns" aria-label="Places along the Waikato River">
+                <a class="river-town river-town--east" style="--route: 1.0" href="#top"><span>"Taupō"</span><small>"Lake / 357 m"</small></a>
+                <a class="river-town river-town--east" style="--route: 2.1" href="#source"><span>"Huka Falls"</span><small>"9 km"</small></a>
+                <a class="river-town river-town--east" style="--route: 27.5" href="#east-bank"><span>"Ātiamuri"</span><small>"117 km"</small></a>
+                <a class="river-town river-town--west" style="--route: 36.8" href="#west-bank"><span>"Mangakino"</span><small>"156 km"</small></a>
+                <a class="river-town river-town--east" style="--route: 57.4" href="#exchange"><span>"Karāpiro"</span><small>"244 km"</small></a>
+                <a class="river-town river-town--west" style="--route: 60.0" href="#next-bend"><span>"Cambridge"</span><small>"255 km"</small></a>
+                <a class="river-town river-town--major river-town--east" style="--route: 68.1" href="#kirikiriroa"><span>"Kirikiriroa"</span><strong>"Hamilton"</strong><small>"289 km / the meeting place"</small></a>
+                <a class="river-town river-town--west" style="--route: 74.0" href="#hosts"><span>"Ngāruawāhia"</span><small>"315 km"</small></a>
+                <a class="river-town river-town--east" style="--route: 79.0" href="#partners"><span>"Rāhui Pōkeka"</span><small>"Huntly / 335 km"</small></a>
+                <a class="river-town river-town--west" style="--route: 83.7" href="#partners"><span>"Rangiriri"</span><small>"356 km"</small></a>
+                <a class="river-town river-town--east" style="--route: 90.1" href="#port"><span>"Meremere"</span><small>"383 km"</small></a>
+                <a class="river-town river-town--west" style="--route: 91.4" href="#port"><span>"Mercer"</span><small>"388 km"</small></a>
+                <a class="river-town river-town--east" style="--route: 98.4" href="#port"><span>"Te Pūaha o Waikato"</span><small>"Port Waikato / 425 km / 0 m"</small></a>
+            </nav>
+
             <section class="scene" id="top" aria-labelledby="page-title">
                 <canvas node_ref=sky_ref id="signal-field" aria-hidden="true"></canvas>
                 <div class="grain" aria-hidden="true"></div>
                 <div class="scanlines" aria-hidden="true"></div>
                 <div class="hero">
                     <p class="eyebrow">"Kirikiriroa, Aotearoa "<span>"/"</span>" First gathering incoming"</p>
-                    <h1 id="page-title">"Waikato "<em>"Business"</em></h1>
+                    <h1 id="page-title"><span>"Entrepreneur"</span>" "<em>"Meetup"</em></h1>
                     <p class="hero__line">"Ideas move when people do."</p>
                     <p class="hero__intro">"A room for current and future entrepreneurs. Meet people. Trade questions. Find the next bend."</p>
                 </div>
@@ -501,18 +532,11 @@ fn App() -> impl IntoView {
                         <span>"Kia orana"</span><i></i><span>"Bula vinaka"</span><i></i>
                     </div>
                 </div>
-                <div class="source-label"><span>"LAKE TAUPO"</span><b>"357 M"</b></div>
+                <div class="source-label"><span>"LAKE TAUPŌ"</span><b>"357 M"</b></div>
             </section>
 
-            <aside class="elevation elevation--left" aria-hidden="true">
-                <span>"TAUPO"</span><i></i><span>"KARAPIRO"</span><i></i><span>"KIRIKIRIROA"</span><i></i><span>"TE PUUAAHA"</span>
-            </aside>
-            <aside class="elevation elevation--right" aria-hidden="true">
-                <span>"357 M"</span><i></i><span>"22 M"</span><i></i><span>"16 M"</span><i></i><span>"0 M"</span>
-            </aside>
-
             <section class="river-story" aria-label="The Waikato Business journey">
-                <article class="bend bend--source">
+                <article class="bend bend--source" id="source">
                     <div class="bend__copy bank--west">
                         <p class="bend__number">"01 / SOURCE"</p>
                         <p class="kicker">"Altered Capital"</p>
@@ -526,7 +550,7 @@ fn App() -> impl IntoView {
                     </figure>
                 </article>
 
-                <article class="bend bend--east">
+                <article class="bend bend--east" id="east-bank">
                     <div class="bend__copy bank--east">
                         <p class="bend__number">"02 / EAST BANK"</p>
                         <p class="kicker">"Hiko Hub (University of Waikato)"</p>
@@ -540,7 +564,7 @@ fn App() -> impl IntoView {
                     </figure>
                 </article>
 
-                <article class="bend bend--west">
+                <article class="bend bend--west" id="west-bank">
                     <div class="bend__copy bank--west">
                         <p class="bend__number">"03 / WEST BANK"</p>
                         <p class="kicker">"Soda (Wintec)"</p>
@@ -563,7 +587,7 @@ fn App() -> impl IntoView {
                     </div>
                 </section>
 
-                <article class="bend bend--exchange">
+                <article class="bend bend--exchange" id="exchange">
                     <div class="bend__copy bank--east">
                         <p class="bend__number">"05 / EXCHANGE"</p>
                         <p class="kicker">"Meet the market"</p>
@@ -600,7 +624,7 @@ fn App() -> impl IntoView {
                     <span>"At every bend, strength, leadership and opportunity."</span>
                 </section>
 
-                <article class="bend bend--courage">
+                <article class="bend bend--courage" id="next-bend">
                     <div class="bend__copy bank--west">
                         <p class="bend__number">"06 / THE NEXT BEND"</p>
                         <p class="kicker">"Step outside the familiar"</p>
@@ -632,9 +656,26 @@ fn App() -> impl IntoView {
                     <p class="stage-picker__answer">{move || stage_prompts[selected_stage.get()].1}</p>
                 </section>
 
-                <section class="vision" aria-labelledby="vision-title">
+                <section class="investors" aria-labelledby="investors-title">
+                    <div class="investors__body">
+                        <p class="bend__number">"08 / INVESTORS"</p>
+                        <p class="kicker">"Capital starts with a conversation"</p>
+                        <h2 id="investors-title">"Are you an investor? Come and meet the people building next."</h2>
+                        <p>"Meet founders and soon-to-be founders. Hear the idea in their own words, ask what they have learned and discuss what could make it stronger. Maybe you can help them."</p>
+                        <a class="text-link" href=EVENTBRITE_URL target="_blank" rel="noreferrer">"Join the room "<span>"↗"</span></a>
+                    </div>
+                    <div class="investors__prompt">
+                        <p>"Support can look like"</p>
+                        <strong>"A useful question"</strong>
+                        <strong>"A trusted introduction"</strong>
+                        <strong>"A real partnership"</strong>
+                        <strong>"Financial backing"</strong>
+                    </div>
+                </section>
+
+                <section class="vision" id="kirikiriroa" aria-labelledby="vision-title">
                     <div class="vision__lead">
-                        <p class="bend__number">"08 / KIRIKIRIROA"</p>
+                        <p class="bend__number">"09 / KIRIKIRIROA"</p>
                         <p class="kicker">"The convening vision"</p>
                         <h2 id="vision-title">"Build the business community we wish we had met sooner."</h2>
                     </div>
@@ -645,9 +686,9 @@ fn App() -> impl IntoView {
                     </div>
                 </section>
 
-                <section class="hosts" aria-labelledby="hosts-title">
+                <section class="hosts" id="hosts" aria-labelledby="hosts-title">
                     <div class="hosts__intro">
-                        <p class="bend__number">"09 / YOUR HOSTS"</p>
+                        <p class="bend__number">"10 / YOUR HOSTS"</p>
                         <h2 id="hosts-title">"People who will make the introduction."</h2>
                     </div>
                     <div class="host-list">
@@ -666,9 +707,9 @@ fn App() -> impl IntoView {
                     </div>
                 </section>
 
-                <section class="partners" aria-labelledby="partners-title">
+                <section class="partners" id="partners" aria-labelledby="partners-title">
                     <div>
-                        <p class="bend__number">"10 / TOGETHER"</p>
+                        <p class="bend__number">"11 / TOGETHER"</p>
                         <h2 id="partners-title">"Brought into the same current by"</h2>
                         <p class="partner-credit">
                             <a href="https://www.hikohub.co.nz" target="_blank" rel="noreferrer">"Hiko Hub (University of Waikato)"</a>
@@ -703,19 +744,19 @@ fn App() -> impl IntoView {
                 </section>
             </section>
 
-            <footer class="sea" aria-labelledby="sea-title">
+            <footer class="sea" id="port" aria-labelledby="sea-title">
                 <img src="assets/port-waikato.jpg" alt="The Waikato River meeting the Tasman Sea at Port Waikato" loading="lazy" decoding="async" />
                 <div class="sea__veil"></div>
                 <div class="sea__content">
                     <p class="bend__number">"TE PUUAAHA O WAIKATO / SEA LEVEL"</p>
                     <h2 id="sea-title">"Meet the people who move an idea into the world."</h2>
                     <a class="sea__cta" href=EVENTBRITE_URL target="_blank" rel="noreferrer">
-                        <span>"Find Waikato Business on Eventbrite"</span><b>"↗"</b>
+                        <span>"Find Entrepreneur Meetup on Eventbrite"</span><b>"↗"</b>
                     </a>
                     <p class="sea__welcome">"Kia ora. Namaste. Ni hao. Talofa. Welcome."</p>
                 </div>
                 <div class="sea__fineprint">
-                    <span>"Waikato Business / Kirikiriroa, Aotearoa"</span>
+                    <span>"Waikato Entrepreneur Meetup / Kirikiriroa, Aotearoa"</span>
                     <span>"River geometry: OpenStreetMap contributors, ODbL"</span>
                 </div>
             </footer>

@@ -15,8 +15,11 @@ for (const viewport of viewports) {
 
     await page.setViewportSize(viewport);
     await page.goto("/", { waitUntil: "networkidle" });
-    await expect(page.locator("h1")).toContainText("Waikato Business");
+    await expect(page.locator("h1")).toContainText("Entrepreneur Meetup");
     await expect(page.locator(".masthead")).toHaveCSS("position", "fixed");
+    await expect(page.locator(".river-town")).toHaveCount(13);
+    await expect(page.locator(".river-town--major")).toContainText("Kirikiriroa");
+    await expect(page.locator(".bend__media img").first()).toHaveCSS("opacity", "0.54");
 
     const pageHeight = await page.evaluate(() => document.documentElement.scrollHeight);
     for (let y = 0; y < pageHeight; y += Math.floor(viewport.height * 0.72)) {
@@ -27,6 +30,9 @@ for (const viewport of viewports) {
       await image.scrollIntoViewIfNeeded();
       await expect(image).toHaveJSProperty("complete", true);
     }
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await page.waitForTimeout(180);
+    await page.screenshot({ path: `/tmp/waibiz-${viewport.name}-port.png` });
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(180);
 

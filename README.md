@@ -1,6 +1,6 @@
-# Waikato Business
+# Waikato Entrepreneur / Biz Meetup
 
-The single-page Leptos/WASM site for Waikato Business, a gathering for current
+The single-page Leptos/WASM site for Waikato Entrepreneur / Biz Meetup, a gathering for current
 and future entrepreneurs in Kirikiriroa and across Waikato.
 
 Presented by:
