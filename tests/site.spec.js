@@ -21,6 +21,13 @@ for (const viewport of viewports) {
     await expect(page.locator(".river-town--major")).toContainText("Kirikiriroa");
     await expect(page.locator(".bend__media img").first()).toHaveCSS("opacity", "0.54");
     await expect(page.locator(".event-facts")).toContainText("Thursday 15 October 2026");
+    await expect(page.locator("h1 em")).toHaveCSS("color", "rgb(214, 64, 50)");
+    const unlinkedImages = await page.evaluate(() =>
+      [...document.images].filter((image) => !image.closest("a[href]")).map((image) => image.src),
+    );
+    expect(unlinkedImages).toEqual([]);
+    await expect(page.locator(".faq__list div")).toHaveCount(6);
+    await expect(page.locator(".programme__steps li")).toHaveCount(4);
 
     const pageHeight = await page.evaluate(() => document.documentElement.scrollHeight);
     for (let y = 0; y < pageHeight; y += Math.floor(viewport.height * 0.72)) {
@@ -96,6 +103,7 @@ for (const viewport of viewports) {
 
     await page.locator(".stage-picker button").nth(2).click();
     await expect(page.locator(".stage-picker__answer")).toContainText("knot");
+    await expect(page.locator(".stage-picker__detail")).toContainText("Founders one or two steps ahead");
     expect(errors).toEqual([]);
 
     await page.screenshot({

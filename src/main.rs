@@ -461,8 +461,23 @@ fn start_river_field(canvas: HtmlCanvasElement) {
 #[component]
 fn PartnerLogo(href: &'static str, src: &'static str, alt: &'static str) -> impl IntoView {
     view! {
-        <a class="partner-logo" href=href target="_blank" rel="noreferrer">
+        <a class="partner-logo" href=href target="_blank" rel="noreferrer" title=alt>
             <img src=src alt=alt loading="lazy" decoding="async" />
+        </a>
+    }
+}
+
+#[component]
+fn MediaLink(
+    href: &'static str,
+    src: &'static str,
+    alt: &'static str,
+    label: &'static str,
+) -> impl IntoView {
+    view! {
+        <a class="media-link" href=href target="_blank" rel="noreferrer" aria-label=label>
+            <img src=src alt=alt loading="lazy" decoding="async" />
+            <span class="media-link__hint" aria-hidden="true">{label}<b>"↗"</b></span>
         </a>
     }
 }
@@ -472,26 +487,37 @@ fn App() -> impl IntoView {
     let sky_ref = NodeRef::<html::Canvas>::new();
     let river_ref = NodeRef::<html::Canvas>::new();
     let selected_stage = RwSignal::new(0usize);
+    // (label, prompt, bring, look for)
     let stage_prompts = [
         (
             "An idea",
             "Bring the rough thought. Find the person who asks the useful question.",
+            "A one-sentence description of the problem you keep noticing.",
+            "Someone who has lived with that problem, and someone who has already started.",
         ),
         (
             "First sale",
             "Meet customers. Test whether value really changes hands.",
+            "What you charged, what they said, and what you still cannot explain.",
+            "Operators who have sold the same kind of thing, and a second customer.",
         ),
         (
             "Growing",
             "Share the knot you cannot untie alone. Someone here may have the thread.",
+            "The decision you have been putting off: hiring, pricing, a market, a partner.",
+            "Founders one or two steps ahead, and people with a door into your next market.",
         ),
         (
             "Experienced",
             "Bring a lesson, an introduction or a door you can hold open.",
+            "A story about a mistake that cost you time, and how you would avoid it now.",
+            "A first-time founder who needs ten minutes of your attention.",
         ),
         (
             "Capital",
             "Meet builders early. Listen for conviction before the pitch is polished.",
+            "Curiosity, candour and a willingness to follow up after the night.",
+            "Founders before the deck exists, and co-investors who know Waikato.",
         ),
     ];
 
@@ -543,7 +569,11 @@ fn App() -> impl IntoView {
                     <p class="eyebrow">"Kirikiriroa, Aotearoa "<span>"/"</span>" First gathering incoming"</p>
                     <h1 id="page-title"><span>"Entrepreneur"</span>" "<em>"Meetup"</em></h1>
                     <p class="hero__line">"Ideas move when people do."</p>
-                    <p class="hero__intro">"A room for current and future entrepreneurs. Meet people. Trade questions. Find the next bend."</p>
+                    <p class="hero__intro">"A room for current and future entrepreneurs across Waikato. Meet people. Trade questions. Find the next bend. Hosted together by Hiko Hub, Soda and Altered Capital."</p>
+                    <div class="hero__actions">
+                        <a class="hero__cta" href=EVENTBRITE_URL target="_blank" rel="noreferrer">"Register on Eventbrite "<b aria-hidden="true">"↗"</b></a>
+                        <a class="hero__more" href="#event-facts">"How the evening runs "<b aria-hidden="true">"↓"</b></a>
+                    </div>
                 </div>
 
                 <div class="welcome-band" aria-label="Welcomes from our community">
@@ -561,18 +591,51 @@ fn App() -> impl IntoView {
                 <div class="source-label"><span>"LAKE TAUPŌ"</span><b>"357 M"</b></div>
             </section>
 
-            <section class="event-facts" aria-labelledby="event-facts-title">
+            <section class="event-facts" id="event-facts" aria-labelledby="event-facts-title">
                 <div class="event-facts__lead">
                     <p class="bend__number">"THE FIRST GATHERING"</p>
                     <h2 id="event-facts-title">"A meetup with a job to do."</h2>
-                    <p>"Come as you are. Leave with one honest conversation and one useful introduction."</p>
+                    <p>"Come as you are. Leave with one honest conversation and one useful introduction. No pitch deck required, no badge that says how far along you are. Just people who are building, people who want to, and people who can help."</p>
+                    <a class="text-link text-link--light" href=EVENTBRITE_URL target="_blank" rel="noreferrer">"Register on Eventbrite "<span>"↗"</span></a>
                 </div>
                 <dl class="event-facts__grid">
                     <div><dt>"When"</dt><dd>"Thursday 15 October 2026"</dd></div>
                     <div><dt>"Where"</dt><dd>"Kirikiriroa / venue revealed with registration"</dd></div>
                     <div><dt>"Who"</dt><dd>"Founders, future founders, investors and practical supporters"</dd></div>
                     <div><dt>"Why"</dt><dd>"Meet beyond your usual circle and help an idea move"</dd></div>
+                    <div><dt>"Hosted by"</dt><dd>"Hiko Hub (University of Waikato), Soda (Wintec) and Altered Capital"</dd></div>
+                    <div><dt>"Bring"</dt><dd>"One question you are stuck on and one introduction you can offer"</dd></div>
                 </dl>
+            </section>
+
+            <section class="programme" aria-labelledby="programme-title">
+                <div class="programme__intro">
+                    <p class="bend__number">"THE SHAPE OF THE EVENING"</p>
+                    <h2 id="programme-title">"Short on speeches. Long on conversation."</h2>
+                    <p>"The evening is built around the people in the room, not the people at the front. A short welcome, a few honest stories, then the real work: finding the person you should be talking to."</p>
+                </div>
+                <ol class="programme__steps">
+                    <li>
+                        <span>"01"</span>
+                        <strong>"Arrive"</strong>
+                        <p>"Doors open, name tags out. Tell the host at the door what you are building or wondering about. That is all the introduction you need."</p>
+                    </li>
+                    <li>
+                        <span>"02"</span>
+                        <strong>"Hear"</strong>
+                        <p>"A handful of short stories from founders and supporters in the room: what they are working on, what went wrong, what they need next."</p>
+                    </li>
+                    <li>
+                        <span>"03"</span>
+                        <strong>"Talk"</strong>
+                        <p>"Open conversation with a purpose. Hosts move around the room making introductions, so nobody is left holding a drink alone."</p>
+                    </li>
+                    <li>
+                        <span>"04"</span>
+                        <strong>"Follow up"</strong>
+                        <p>"Leave with at least one name to email tomorrow. The next gathering is on the other bank, so the conversation keeps moving."</p>
+                    </li>
+                </ol>
             </section>
 
             <section class="river-story" aria-label="The Waikato Entrepreneur Meetup journey">
@@ -582,10 +645,16 @@ fn App() -> impl IntoView {
                         <p class="kicker">"Altered Capital"</p>
                         <h2>"Back the person before the polish."</h2>
                         <p>"Every venture begins upstream: a hunch, a problem, a person prepared to start. Capital matters. So do courage, candour and the first useful introduction."</p>
+                        <p>"Altered Capital sits at the source of this meetup. The conviction behind it is simple: Waikato has more people worth backing than it has rooms where they can meet each other. So we are making one."</p>
+                        <ul class="bend__list">
+                            <li>"A view on what early capital can and cannot fix."</li>
+                            <li>"Patient questions before anyone reaches for a term sheet."</li>
+                            <li>"Introductions that reach beyond the region."</li>
+                        </ul>
                         <a class="text-link" href="https://alteredcapital.com" target="_blank" rel="noreferrer">"Visit Altered Capital "<span>"↗"</span></a>
                     </div>
                     <figure class="bend__media bank--east media--landscape">
-                        <img src="assets/hiko-people-two.webp" alt="A presenter sharing ideas with a Waikato audience" loading="lazy" decoding="async" />
+                        <MediaLink href="https://alteredcapital.com" src="assets/hiko-people-two.webp" alt="A presenter sharing ideas with a Waikato audience" label="Altered Capital" />
                         <figcaption>"Start with what you know. Leave with who you met."</figcaption>
                     </figure>
                 </article>
@@ -596,13 +665,35 @@ fn App() -> impl IntoView {
                         <p class="kicker">"Hiko Hub (University of Waikato)"</p>
                         <h2>"Knowledge meets momentum."</h2>
                         <p>"Researchers, engineers, computer scientists, students and founders belong at the same table. Bring the thing you are learning and the thing you cannot yet solve."</p>
+                        <p>"Hiko Hub, Te Whare Ohaoha, is the University of Waikato's home for entrepreneurship. It is where a lab result, a capstone project or a stubborn question from a lecture starts to look like a company. On the east bank the meetup brings that campus energy into the same room as the people who have already built something."</p>
+                        <ul class="bend__list">
+                            <li>"Research looking for a market, and markets looking for research."</li>
+                            <li>"Students and new graduates meeting founders who were them five years ago."</li>
+                            <li>"A friendly place to say the idea out loud for the first time."</li>
+                        </ul>
                         <p class="welcome-call">"Students and new grads: you belong in the room."</p>
+                        <a class="text-link" href="https://www.hikohub.co.nz" target="_blank" rel="noreferrer">"Visit Hiko Hub "<span>"↗"</span></a>
                     </div>
-                    <figure class="bend__media bank--west">
-                        <img src="assets/hiko-hub.jpg" alt="Hiko Hub at the University of Waikato" loading="lazy" decoding="async" />
-                        <figcaption>"Hiko Hub / Te Whare Ohaoha"</figcaption>
+                    <figure class="bend__media bank--west media--landscape">
+                        <MediaLink href="https://www.hikohub.co.nz" src="assets/hiko-exaba-interns.webp" alt="Dr Stuart Inglis with two senior Exaba staff and a large group of University of Waikato interns" label="Hiko Hub" />
+                        <figcaption>"Exaba executives and interns / University of Waikato"</figcaption>
                     </figure>
                 </article>
+
+                <section class="gallery" aria-label="Scenes from the east bank">
+                    <figure>
+                        <MediaLink href="https://www.waikato.ac.nz" src="assets/hiko-people-one.webp" alt="The University of Waikato campus with a carved pou in the foreground" label="University of Waikato" />
+                        <figcaption>"East bank / University of Waikato"</figcaption>
+                    </figure>
+                    <figure>
+                        <MediaLink href="https://www.hikohub.co.nz" src="assets/hiko-hub.jpg" alt="The Hiko Hub building at the University of Waikato" label="Hiko Hub" />
+                        <figcaption>"Hiko Hub / Te Whare Ohaoha"</figcaption>
+                    </figure>
+                    <figure>
+                        <MediaLink href="https://www.hikohub.co.nz" src="assets/hiko-woman.webp" alt="Two people working side by side at computers in Hiko Hub" label="Hiko Hub" />
+                        <figcaption>"Building side by side / Hiko Hub"</figcaption>
+                    </figure>
+                </section>
 
                 <article class="bend bend--west" id="west-bank">
                     <div class="bend__copy bank--west">
@@ -610,9 +701,16 @@ fn App() -> impl IntoView {
                         <p class="kicker">"Soda (Wintec)"</p>
                         <h2>"Practice makes possibility real."</h2>
                         <p>"Get beyond the comfortable conversation. Meet operators, makers and founders who can test the idea against real work, real customers and real constraints."</p>
+                        <p>"Soda is Wintec's business incubator and the west bank of this meetup. Its programmes, from Growth Lab for women founders to hands-on support for early businesses, are built on doing rather than describing. Expect people who ask what you sold last week, not what you plan to raise next year."</p>
+                        <ul class="bend__list">
+                            <li>"Practical founders with customers, invoices and lessons to share."</li>
+                            <li>"Makers, trades and services businesses, not only software."</li>
+                            <li>"Programmes to join once the conversation turns into a plan."</li>
+                        </ul>
+                        <a class="text-link" href="https://www.sodainc.com" target="_blank" rel="noreferrer">"Visit Soda "<span>"↗"</span></a>
                     </div>
                     <figure class="bend__media bank--east">
-                        <img src="assets/women-growth-lab.webp" alt="Women founders working together in Soda's Growth Lab" loading="lazy" decoding="async" />
+                        <MediaLink href="https://www.sodainc.com" src="assets/women-growth-lab.webp" alt="Women founders working together in Soda's Growth Lab" label="Soda" />
                         <figcaption>"More voices. Better ventures."</figcaption>
                     </figure>
                 </article>
@@ -620,10 +718,11 @@ fn App() -> impl IntoView {
                 <section class="confluence" aria-labelledby="confluence-title">
                     <p class="bend__number">"04 / CONFLUENCE"</p>
                     <h2 id="confluence-title">"One river. Two banks. A shared room."</h2>
-                    <p>"A jointly held and sponsored event, alternating between Hiko Hub at the University of Waikato and Soda at Wintec."</p>
+                    <p>"A jointly held and sponsored event, alternating between Hiko Hub at the University of Waikato and Soda at Wintec. One gathering on the east bank, the next on the west. Same current, same welcome, a different set of faces each time."</p>
+                    <p class="confluence__detail">"Two institutions, one investor and a growing group of founders have agreed on something rare: the community matters more than whose logo is on the door. Come to whichever bank is closest. Then come to the other one."</p>
                     <div class="bank-key" aria-label="Partner banks">
-                        <span><i></i>"East / Hiko Hub (University of Waikato)"</span>
-                        <span><i></i>"West / Soda (Wintec)"</span>
+                        <a href="#east-bank"><i></i>"East / Hiko Hub (University of Waikato)"</a>
+                        <a href="#west-bank"><i></i>"West / Soda (Wintec)"</a>
                     </div>
                 </section>
 
@@ -633,10 +732,16 @@ fn App() -> impl IntoView {
                         <p class="kicker">"Meet the market"</p>
                         <h2>"Value has to change hands."</h2>
                         <p>"A business exchanges a product or service for money. That means meeting the people with the problem, the budget, the experience or the capital, then listening closely."</p>
+                        <p>"Most ideas do not fail because they were wrong. They fail because nobody checked. The meetup is a cheap place to check. Three questions to bring to every conversation:"</p>
+                        <ul class="bend__list">
+                            <li>"Who actually has this problem, and how do they deal with it today?"</li>
+                            <li>"Who holds the budget, and what would they give up to solve it?"</li>
+                            <li>"What would need to be true for them to pay you next month?"</li>
+                        </ul>
                         <blockquote>"Customers before assumptions. Conversations before theatre."</blockquote>
                     </div>
                     <figure class="bend__media bank--west">
-                        <img src="assets/business-conversation.jpg" alt="Two women in business talking face to face" loading="lazy" decoding="async" />
+                        <MediaLink href=EVENTBRITE_URL src="assets/business-conversation.jpg" alt="Two women in business talking face to face" label="Register for the meetup" />
                         <figcaption>"The useful conversation is usually one hello away."</figcaption>
                     </figure>
                 </article>
@@ -645,6 +750,7 @@ fn App() -> impl IntoView {
                     <div class="voices__intro">
                         <p class="bend__number">"VOICES FROM UPSTREAM"</p>
                         <h2 id="voices-title">"The stories stay with you."</h2>
+                        <p>"Our partners have hosted founder evenings on both banks for years. The talks people still mention are the ones where a founder told the truth about the early days, from the first Uber rides to the first Xero invoices."</p>
                     </div>
                     <div class="voices__quotes">
                         <blockquote>
@@ -655,6 +761,10 @@ fn App() -> impl IntoView {
                             <p>"Listening to the early days of Xero was so interesting!"</p>
                             <cite>"Dr Stuart Inglis / Altered Capital"</cite>
                         </blockquote>
+                        <blockquote class="voices__invite">
+                            <p>"Your story could be next. If you have built something in Waikato and would tell the unvarnished version, we would like to hear from you."</p>
+                            <cite><a href="mailto:anna@sodainc.com">"Offer a story "<span>"↗"</span></a></cite>
+                        </blockquote>
                     </div>
                 </section>
 
@@ -662,6 +772,7 @@ fn App() -> impl IntoView {
                     <p>"Waikato taniwharau"</p>
                     <blockquote>"He piko, he taniwha. He piko, he taniwha."</blockquote>
                     <span>"At every bend, strength, leadership and opportunity."</span>
+                    <p class="whakatauki__note">"The whakataukī speaks of the Waikato River, where every bend holds a chief. We borrow it with respect: at every turn of this journey there is someone with strength to offer, and the meetup exists to help you find them."</p>
                 </section>
 
                 <article class="bend bend--courage" id="next-bend">
@@ -670,9 +781,16 @@ fn App() -> impl IntoView {
                         <p class="kicker">"Step outside the familiar"</p>
                         <h2>"You do not need a pitch. You need a first sentence."</h2>
                         <p>"Come curious. Ask someone what they are building. Tell them what you are stuck on. Offer one connection. That is how a network becomes a community."</p>
+                        <p>"If starting the conversation is the hard part, borrow one of these:"</p>
+                        <ul class="bend__list bend__list--quotes">
+                            <li>"\"What are you working on at the moment?\""</li>
+                            <li>"\"What is the thing you are stuck on this month?\""</li>
+                            <li>"\"Who would be useful for you to meet tonight?\""</li>
+                        </ul>
+                        <p>"Nobody in the room will mind. Most of them are hoping you ask first."</p>
                     </div>
                     <figure class="bend__media bank--east">
-                        <img src="assets/woman-founder.webp" alt="A woman founder celebrating an early business milestone" loading="lazy" decoding="async" />
+                        <MediaLink href=EVENTBRITE_URL src="assets/woman-founder.webp" alt="A woman founder celebrating an early business milestone" label="Register for the meetup" />
                         <figcaption>"We celebrate the sketch, the prototype and the first customer."</figcaption>
                     </figure>
                 </article>
@@ -681,19 +799,25 @@ fn App() -> impl IntoView {
                     <div>
                         <p class="bend__number">"07 / WHERE ARE YOU NOW?"</p>
                         <h2 id="stage-title">"There is a place for your stage."</h2>
+                        <p class="stage-picker__lead">"Pick the stage closest to yours. Each one has something to bring and someone to look for."</p>
                     </div>
                     <div class="stage-picker__controls" role="group" aria-label="Choose your business stage">
-                        {stage_prompts.iter().enumerate().map(|(index, (label, _))| {
+                        {stage_prompts.iter().enumerate().map(|(index, (label, _, _, _))| {
                             view! {
                                 <button
                                     type="button"
                                     class:active=move || selected_stage.get() == index
+                                    aria-pressed=move || selected_stage.get() == index
                                     on:click=move |_| selected_stage.set(index)
                                 >{*label}</button>
                             }
                         }).collect_view()}
                     </div>
                     <p class="stage-picker__answer">{move || stage_prompts[selected_stage.get()].1}</p>
+                    <dl class="stage-picker__detail">
+                        <div><dt>"Bring"</dt><dd>{move || stage_prompts[selected_stage.get()].2}</dd></div>
+                        <div><dt>"Look for"</dt><dd>{move || stage_prompts[selected_stage.get()].3}</dd></div>
+                    </dl>
                 </section>
 
                 <section class="investors" aria-labelledby="investors-title">
@@ -702,6 +826,7 @@ fn App() -> impl IntoView {
                         <p class="kicker">"Capital starts with a conversation"</p>
                         <h2 id="investors-title">"Are you an investor? Come and meet the people building next."</h2>
                         <p>"Meet founders and soon-to-be founders. Hear the idea in their own words, ask what they have learned and discuss what could make it stronger. Maybe you can help them."</p>
+                        <p>"The meetup is the earliest signal you will find in Waikato: people before the deck, companies before the name. It is also the cheapest way to build a relationship that will matter when the round eventually opens. We ask three things of investors in the room: curiosity, candour and a follow-up."</p>
                         <a class="text-link" href=EVENTBRITE_URL target="_blank" rel="noreferrer">"Join the room "<span>"↗"</span></a>
                     </div>
                     <div class="investors__prompt">
@@ -710,6 +835,7 @@ fn App() -> impl IntoView {
                         <strong>"A trusted introduction"</strong>
                         <strong>"A real partnership"</strong>
                         <strong>"Financial backing"</strong>
+                        <strong>"A second conversation"</strong>
                     </div>
                 </section>
 
@@ -718,31 +844,72 @@ fn App() -> impl IntoView {
                         <p class="bend__number">"09 / KIRIKIRIROA"</p>
                         <p class="kicker">"The convening vision"</p>
                         <h2 id="vision-title">"Build the business community we wish we had met sooner."</h2>
+                        <ul class="vision__principles" aria-label="Our principles">
+                            <li><strong>"Wide invitation."</strong>" Every stage, every discipline, every bank."</li>
+                            <li><strong>"Both banks."</strong>" University of Waikato and Wintec, together, on purpose."</li>
+                            <li><strong>"Practical help."</strong>" Introductions and honest answers over applause."</li>
+                            <li><strong>"Follow through."</strong>" A meetup is only as good as what happens the next morning."</li>
+                        </ul>
                     </div>
                     <div class="vision__body">
                         <p class="vision__rally">"Across Waikato, entrepreneurs are building some of the country's best companies. They deserve moral support, partnership, practical help and financial backing."</p>
+                        <p>"Kirikiriroa sits at the middle of the river and the middle of this story. Between the university on one side of town and the polytechnic on the other are thousands of people with the skills to build, and too few reasons to meet."</p>
                         <p>"Dr Stuart Inglis brings Waikato roots, engineering and computer science connections, and the perspective of Altered Capital to help University of Waikato and Wintec collaborate."</p>
                         <p>"The invitation is deliberately wide: experienced founders, first-time founders, future founders, students and new graduates. We are here to be cheerleaders for the next brave step."</p>
                     </div>
+                </section>
+
+                <section class="faq" aria-labelledby="faq-title">
+                    <div class="faq__intro">
+                        <p class="bend__number">"GOOD TO KNOW"</p>
+                        <h2 id="faq-title">"Questions people ask before they come."</h2>
+                    </div>
+                    <dl class="faq__list">
+                        <div>
+                            <dt>"Do I need a business already?"</dt>
+                            <dd>"No. Future founders, students and the merely curious are exactly who we want in the room. An idea, or even a nagging problem, is enough."</dd>
+                        </div>
+                        <div>
+                            <dt>"Will I have to pitch?"</dt>
+                            <dd>"No. There is no stage for pitching and no panel. If you want to tell your story in a future gathering, tell a host and we will find you a slot."</dd>
+                        </div>
+                        <div>
+                            <dt>"I am not a technology person. Is this for me?"</dt>
+                            <dd>"Yes. Waikato businesses are built in sheds, kitchens, clinics and paddocks as well as in code. Bring whatever you are making."</dd>
+                        </div>
+                        <div>
+                            <dt>"I am an investor or adviser. What is my role?"</dt>
+                            <dd>"Listen, ask good questions and offer one follow-up. Nobody will hand you a deck, and that is the point."</dd>
+                        </div>
+                        <div>
+                            <dt>"Where exactly is it?"</dt>
+                            <dd>"Kirikiriroa. The venue alternates between Hiko Hub at the University of Waikato and Soda at Wintec, and is confirmed with your registration."</dd>
+                        </div>
+                        <div>
+                            <dt>"How do I register?"</dt>
+                            <dd><a href=EVENTBRITE_URL target="_blank" rel="noreferrer">"Find Waikato Entrepreneur Meetup on Eventbrite"</a>" and reserve a place so we know how many chairs to put out."</dd>
+                        </div>
+                    </dl>
                 </section>
 
                 <section class="hosts" id="hosts" aria-labelledby="hosts-title">
                     <div class="hosts__intro">
                         <p class="bend__number">"10 / YOUR HOSTS"</p>
                         <h2 id="hosts-title">"People who will make the introduction."</h2>
+                        <p>"Find any of us on the night. Tell us what you are building and who you are hoping to meet, and we will walk you across the room. Before the night, email is the fastest way to reach us."</p>
                     </div>
                     <div class="host-list">
                         <a href="https://alteredcapital.com" target="_blank" rel="noreferrer">
                             <span>"01"</span><strong>"Dr Stuart Inglis"</strong><small>"Altered Capital / organiser"</small><b>"↗"</b>
                         </a>
                         <a href="mailto:anna@sodainc.com">
-                            <span>"02"</span><strong>"Anna Devcich"</strong><small>"Soda"</small><b>"↗"</b>
+                            <span>"02"</span><strong>"Anna Devcich"</strong><small>"Soda / west bank host"</small><b>"↗"</b>
                         </a>
                         <a href="mailto:myles.mcinnes@waikato.ac.nz">
-                            <span>"03"</span><strong>"Myles McInnes"</strong><small>"Hiko Hub"</small><b>"↗"</b>
+                            <span>"03"</span><strong>"Myles McInnes"</strong><small>"Hiko Hub / east bank host"</small><b>"↗"</b>
                         </a>
                         <a href="mailto:john@sodainc.com">
-                            <span>"04"</span><strong>"John O'Donoghue"</strong><small>"Soda"</small><b>"↗"</b>
+                            <span>"04"</span><strong>"John O'Donoghue"</strong><small>"Soda / west bank host"</small><b>"↗"</b>
                         </a>
                     </div>
                 </section>
@@ -766,6 +933,7 @@ fn App() -> impl IntoView {
                                 <PartnerLogo href="https://www.hikohub.co.nz" src="assets/hiko-logo.png" alt="Hiko Hub" />
                                 <PartnerLogo href="https://www.waikato.ac.nz" src="assets/waikato-logo.svg" alt="University of Waikato" />
                             </div>
+                            <p class="partner-group__blurb">"The University of Waikato's entrepreneurship hub, connecting students, researchers and alumni with the people who can turn knowledge into ventures."</p>
                         </div>
                         <div class="partner-group">
                             <p>"Soda "<span>"(Wintec)"</span></p>
@@ -773,23 +941,28 @@ fn App() -> impl IntoView {
                                 <PartnerLogo href="https://www.sodainc.com" src="assets/soda-logo.svg" alt="Soda" />
                                 <PartnerLogo href="https://www.wintec.ac.nz" src="assets/wintec-logo.svg" alt="Wintec" />
                             </div>
+                            <p class="partner-group__blurb">"Wintec's business incubator, supporting founders across Waikato with programmes, mentoring and a practical, customer-first approach to growth."</p>
                         </div>
                         <div class="partner-group">
                             <p>"Altered Capital"</p>
                             <div>
                                 <PartnerLogo href="https://alteredcapital.com" src="assets/altered-one.png" alt="Altered Capital" />
                             </div>
+                            <p class="partner-group__blurb">"An investor with Waikato roots, backing people early and convening the meetup so founders and capital meet before the pitch is polished."</p>
                         </div>
                     </div>
                 </section>
             </section>
 
             <footer class="sea" id="port" aria-labelledby="sea-title">
-                <img src="assets/port-waikato.jpg" alt="The Waikato River meeting the Tasman Sea at Port Waikato" loading="lazy" decoding="async" />
+                <a class="sea__photo" href=EVENTBRITE_URL target="_blank" rel="noreferrer" aria-label="Register for Waikato Entrepreneur Meetup on Eventbrite">
+                    <img src="assets/port-waikato.jpg" alt="The Waikato River meeting the Tasman Sea at Port Waikato" loading="lazy" decoding="async" />
+                </a>
                 <div class="sea__veil"></div>
                 <div class="sea__content">
                     <p class="bend__number">"TE PUUAAHA O WAIKATO / SEA LEVEL"</p>
                     <h2 id="sea-title">"Meet the people who move an idea into the world."</h2>
+                    <p class="sea__lead">"The river ends where it meets something bigger. So does a good idea. Thursday 15 October 2026, in Kirikiriroa. Bring a question, bring an introduction, bring someone who should be there."</p>
                     <a class="sea__cta" href=EVENTBRITE_URL target="_blank" rel="noreferrer">
                         <span>"Find Entrepreneur Meetup on Eventbrite"</span><b>"↗"</b>
                     </a>
@@ -797,7 +970,7 @@ fn App() -> impl IntoView {
                 </div>
                 <div class="sea__fineprint">
                     <span>"Waikato Entrepreneur Meetup / Kirikiriroa, Aotearoa"</span>
-                    <span>"River geometry: OpenStreetMap contributors, ODbL"</span>
+                    <span>"River geometry: OpenStreetMap contributors, ODbL / Port Waikato photograph: Te Ara"</span>
                 </div>
             </footer>
         </main>
