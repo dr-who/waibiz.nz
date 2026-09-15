@@ -288,14 +288,35 @@ fn river_x(width: f64, normalized_x: f64, progress: f64) -> f64 {
     } else {
         (width * 0.48).min(650.0)
     };
-    // The final 19 km turn sharply west before Te Pūaha o Waikato meets the sea.
-    // Smoothstep keeps the geographic line intact upstream while making that
-    // coastal hook legible on a tall, narrow page.
-    let lower_river = ((progress - 0.955) / 0.045).clamp(0.0, 1.0);
-    let lower_river = lower_river * lower_river * (3.0 - 2.0 * lower_river);
-    let hook_scale = if width < 700.0 { 0.65 } else { 0.48 };
+    // The final 6.8 km turn sharply west before Te Pūaha o Waikato meets the sea.
+    // Keep accelerating through the endpoint so its tangent cannot turn vertical.
+    let lower_river = ((progress - 0.984) / 0.016).clamp(0.0, 1.0);
+    let lower_river = lower_river * lower_river;
+    let hook_scale = if width < 700.0 { 1.08 } else { 0.54 };
     let western_hook = lower_river * span * hook_scale;
     width * 0.5 + (normalized_x - 0.5) * span - western_hook
+}
+
+fn river_y_progress(progress: f64) -> f64 {
+    if progress <= 0.984 {
+        return progress;
+    }
+
+    let mouth = ((progress - 0.984) / 0.016).clamp(0.0, 1.0);
+    let vertical_ease = 1.0 - (1.0 - mouth).powi(3);
+    0.984 + vertical_ease * 0.016
+}
+
+fn river_y(
+    width: f64,
+    document_height: f64,
+    scroll_y: f64,
+    source_y: f64,
+    progress: f64,
+) -> f64 {
+    let mouth_inset = if width < 700.0 { 70.0 } else { 34.0 };
+    source_y + river_y_progress(progress) * (document_height - source_y - mouth_inset)
+        - scroll_y
 }
 
 fn trace_river(
@@ -308,7 +329,7 @@ fn trace_river(
     context.begin_path();
     for (index, &(progress, x)) in WAIKATO_RIVER.iter().enumerate() {
         let px = river_x(width, x, progress);
-        let py = source_y + progress * (document_height - source_y) - scroll_y;
+        let py = river_y(width, document_height, scroll_y, source_y, progress);
         if index == 0 {
             context.move_to(px, py);
         } else {
@@ -372,7 +393,7 @@ fn draw_river(canvas: &HtmlCanvasElement, context: &CanvasRenderingContext2d, ti
         let progress = (moving + index as f64 / 7.0) % 1.0;
         let point_index = WAIKATO_RIVER.partition_point(|point| point.0 < progress);
         if let Some(&(_, x)) = WAIKATO_RIVER.get(point_index.min(WAIKATO_RIVER.len() - 1)) {
-            let py = source_y + progress * (document_height - source_y) - scroll_y;
+            let py = river_y(width, document_height, scroll_y, source_y, progress);
             if py > -20.0 && py < height + 20.0 {
                 context.begin_path();
                 context.set_fill_style_str("rgba(241,238,229,0.95)");
@@ -389,7 +410,7 @@ fn draw_river(canvas: &HtmlCanvasElement, context: &CanvasRenderingContext2d, ti
         let point_index = WAIKATO_RIVER.partition_point(|point| point.0 < *progress);
         if let Some(&(_, x)) = WAIKATO_RIVER.get(point_index.min(WAIKATO_RIVER.len() - 1)) {
             let px = river_x(width, x, *progress);
-            let py = source_y + progress * (document_height - source_y) - scroll_y;
+            let py = river_y(width, document_height, scroll_y, source_y, *progress);
             if py > -50.0 && py < height + 50.0 {
                 let pulse = if reduced_motion() {
                     0.0

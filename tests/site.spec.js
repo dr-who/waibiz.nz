@@ -35,22 +35,36 @@ for (const viewport of viewports) {
     await page.waitForTimeout(180);
     const riverMouth = await page.locator("#river-field").evaluate((canvas) => {
       const context = canvas.getContext("2d");
-      const bandHeight = Math.min(canvas.height, 420);
-      const pixels = context.getImageData(0, canvas.height - bandHeight, canvas.width, bandHeight).data;
+      const scale = canvas.width / canvas.clientWidth;
+      const mouthInset = canvas.clientWidth < 700 ? 70 : 34;
+      const bandTop = Math.max(0, Math.floor(canvas.height - (mouthInset + 90) * scale));
+      const bandBottom = Math.min(canvas.height, Math.ceil(canvas.height - (mouthInset - 20) * scale));
+      const bandHeight = bandBottom - bandTop;
+      const pixels = context.getImageData(0, bandTop, canvas.width, bandHeight).data;
       let minimumX = canvas.width;
       let maximumX = 0;
+      let minimumY = bandHeight;
+      let maximumY = 0;
       for (let y = 0; y < bandHeight; y += 2) {
         for (let x = 0; x < canvas.width; x += 2) {
           if (pixels[(y * canvas.width + x) * 4 + 3] > 30) {
             minimumX = Math.min(minimumX, x);
             maximumX = Math.max(maximumX, x);
+            minimumY = Math.min(minimumY, y);
+            maximumY = Math.max(maximumY, y);
           }
         }
       }
-      return { centre: (minimumX + maximumX) / 2, width: canvas.width };
+      return {
+        centre: (minimumX + maximumX) / 2,
+        height: maximumY - minimumY,
+        riverWidth: maximumX - minimumX,
+        width: canvas.width,
+      };
     });
-    expect(riverMouth.centre).toBeLessThan(riverMouth.width * 0.4);
     await page.screenshot({ path: `/tmp/waibiz-${viewport.name}-port.png` });
+    expect(riverMouth.centre).toBeLessThan(riverMouth.width * 0.4);
+    expect(riverMouth.riverWidth).toBeGreaterThan(riverMouth.height * 1.1);
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(180);
 
